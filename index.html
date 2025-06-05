@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Свяжитесь с нами</title>
+
+    <!-- Google Fonts -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- IMask для маски телефона -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/imask/6.4.3/imask.min.js"></script>
+
+    <!-- EmailJS SDK -->
+    <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Open Sans", Arial, sans-serif;
+        background-color: #f9f9f9;
+        margin: 0;
+        padding: 40px 20px;
+      }
+
+      .contact-card {
+        max-width: 550px;
+        margin: 0 auto;
+        background-color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+      }
+
+      .contact-title {
+        font-size: 28px;
+        font-weight: bold;
+        color: #333;
+        margin-bottom: 15px;
+      }
+
+      hr {
+        border: none;
+        border-top: 2px solid #ff9900;
+        margin-bottom: 25px;
+      }
+
+      .form-group {
+        margin-bottom: 20px;
+      }
+
+      label {
+        display: block;
+        font-weight: 600;
+        margin-bottom: 6px;
+        color: #444;
+      }
+
+      input[type="text"],
+      input[type="tel"],
+      textarea {
+        width: 100%;
+        padding: 12px 16px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 15px;
+      }
+
+      input:focus,
+      textarea:focus {
+        border-color: #ff9900;
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(255, 153, 0, 0.2);
+      }
+
+      input.is-invalid {
+        border-color: #dc3545;
+      }
+
+      textarea {
+        resize: vertical;
+        min-height: 100px;
+      }
+
+      .submit-btn {
+        background-color: #ff9900;
+        color: white;
+        border: none;
+        padding: 14px 28px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+      }
+
+      .submit-btn:hover {
+        background-color: #e68a00;
+      }
+
+      .error-message {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 5px;
+        display: none;
+      }
+
+      /* Модальное окно */
+      .modal-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 9999;
+      }
+
+      .modal {
+        background-color: #fff;
+        border-radius: 8px;
+        padding: 25px;
+        max-width: 450px;
+        width: 100%;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+        position: relative;
+        border-left: 10px solid #28a745;
+      }
+
+      .modal.error {
+        border-left-color: #dc3545;
+      }
+
+      .modal-header {
+        font-size: 22px;
+        font-weight: bold;
+        margin-bottom: 10px;
+      }
+
+      .modal-body {
+        font-size: 16px;
+        margin-bottom: 20px;
+      }
+
+      .modal-footer button {
+        background-color: #6c757d;
+        border: none;
+        color: white;
+        padding: 10px 20px;
+        font-size: 15px;
+        border-radius: 6px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="contact-card">
+      <h2 class="contact-title">Свяжитесь с нами</h2>
+      <hr />
+      <form id="contactForm">
+        <div class="form-group">
+          <label for="userName"
+            >Ваше имя: <span style="color: red">*</span></label
+          >
+          <input
+            type="text"
+            id="userName"
+            name="name"
+            required
+            placeholder="Иван Иванов"
+          />
+          <div class="error-message" id="nameError">
+            Пожалуйста, введите ваше имя
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="userPhone"
+            >Ваш телефон:<span style="color: red">*</span></label
+          >
+          <input
+            type="tel"
+            id="userPhone"
+            name="phone"
+            required
+            placeholder="+7 (___) ___-__-__"
+          />
+          <div class="error-message" id="phoneError">
+            Введите корректный номер телефона
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="userMessage">Комментарий</label>
+          <textarea
+            id="userMessage"
+            name="message"
+            placeholder="Ваш комментарий..."
+          ></textarea>
+        </div>
+
+        <button type="submit" class="submit-btn">Отправить</button>
+      </form>
+    </div>
+
+    <!-- Модальное окно статуса -->
+    <div class="modal-overlay" id="statusModal">
+      <div class="modal" id="statusModalContent">
+        <div class="modal-header" id="statusModalTitle"></div>
+        <div class="modal-body" id="statusModalBody"></div>
+        <div class="modal-footer">
+          <button onclick="closeModal()">Закрыть</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Инициализация EmailJS
+      emailjs.init("xdXtSVt7aFpIctRwE");
+
+      // Инициализация маски телефона
+      const phoneInput = document.getElementById("userPhone");
+      const phoneMask = new IMask(phoneInput, {
+        mask: "+{7}(000)000-00-00",
+      });
+
+      // Элементы формы
+      const form = document.getElementById("contactForm");
+      const nameInput = document.getElementById("userName");
+      const nameError = document.getElementById("nameError");
+      const phoneError = document.getElementById("phoneError");
+
+      // Модальное окно
+      function showStatusModal(title, message, status) {
+        const modal = document.getElementById("statusModal");
+        const modalContent = document.getElementById("statusModalContent");
+        const statusTitle = document.getElementById("statusModalTitle");
+        const statusBody = document.getElementById("statusModalBody");
+
+        statusTitle.textContent = title;
+        statusBody.textContent = message;
+
+        if (status === "success") {
+          modalContent.classList.remove("error");
+          modalContent.style.borderLeftColor = "#28a745";
+        } else if (status === "error") {
+          modalContent.classList.add("error");
+          modalContent.style.borderLeftColor = "#dc3545";
+        }
+
+        modal.style.display = "flex";
+      }
+
+      // Закрытие модального окна
+      function closeModal() {
+        const modal = document.getElementById("statusModal");
+        modal.style.display = "none";
+      }
+
+      // Закрытие при клике вне
+      window.addEventListener("click", function (event) {
+        const modal = document.getElementById("statusModal");
+        if (event.target === modal) {
+          closeModal();
+        }
+      });
+
+      // Отправка формы
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+
+        let isValid = true;
+
+        if (!nameInput.value.trim()) {
+          nameError.style.display = "block";
+          nameInput.classList.add("is-invalid");
+          isValid = false;
+        } else {
+          nameError.style.display = "none";
+          nameInput.classList.remove("is-invalid");
+        }
+
+        if (!phoneMask.masked.isComplete) {
+          phoneError.style.display = "block";
+          phoneInput.classList.add("is-invalid");
+          isValid = false;
+        } else {
+          phoneError.style.display = "none";
+          phoneInput.classList.remove("is-invalid");
+        }
+
+        if (!isValid) return;
+
+        // Блокировка кнопки при отправке
+        const submitBtn = form.querySelector('button[type="submit"]');
+        submitBtn.disabled = true;
+        submitBtn.textContent = "Отправка...";
+
+        // EmailJS
+        emailjs
+          .sendForm("service_qrmru7n", "template_mn89k9k", this)
+          .then(() => {
+            form.reset();
+            phoneMask.value = "";
+            showStatusModal(
+              "Успешно!",
+              "Сообщение успешно отправлено!",
+              "success"
+            );
+          })
+          .catch((error) => {
+            showStatusModal(
+              "Ошибка!",
+              `Произошла ошибка: ${error.text}`,
+              "error"
+            );
+          })
+          .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "Отправить";
+          });
+      });
+
+      // Валидация при вводе
+      nameInput.addEventListener("input", function () {
+        if (this.value.trim()) {
+          nameError.style.display = "none";
+          this.classList.remove("is-invalid");
+        }
+      });
+
+      phoneInput.addEventListener("input", function () {
+        if (phoneMask.masked.isComplete) {
+          phoneError.style.display = "none";
+          this.classList.remove("is-invalid");
+        } else {
+          phoneError.style.display = "block";
+          this.classList.add("is-invalid");
+        }
+      });
+    </script>
+  </body>
+</html>
